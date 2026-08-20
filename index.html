@@ -1,38 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Location Tracker</title>
 </head>
-
 <body>
+
   <h1>📍 Live Location Tracker</h1>
 
   <button id="startBtn">Start Location</button>
-
   <p id="status">Location not started</p>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      set
-    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Firebase config yahan baad mein add karenge
-    const firebaseConfig = {    const firebaseConfig = {
-      apiKey: "AIzaSy...",
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSy...", 
       authDomain: "live-location-tracker.firebaseapp.com",
-     databaseURL: "https://live-location-tracker-6cef6-default-rtdb.firebaseio.com", ",
+      databaseURL: "https://live-location-tracker-1ce16-default-rtdb.firebaseio.com",
       projectId: "live-location-tracker",
       storageBucket: "live-location-tracker.appspot.com",
       messagingSenderId: "123456789...",
       appId: "1:123456789...:web:..."
-    };
-                            
-      // Firebase Console se config yahan paste hoga
     };
 
     const app = initializeApp(firebaseConfig);
@@ -41,30 +33,29 @@
     document.getElementById("startBtn").addEventListener("click", () => {
 
       if (!navigator.geolocation) {
-        document.getElementById("status").textContent =
-          "Geolocation supported nahi hai.";
+        document.getElementById("status").textContent = "Geolocation supported nahi hai.";
         return;
       }
 
+      document.getElementById("status").textContent = "Finding location...";
+
       navigator.geolocation.watchPosition(
         (position) => {
-
           const latitude = position.coords.latitude;
           const longitude = position.coords.longitude;
 
-          document.getElementById("status").textContent =
-            `Latitude: ${latitude}, Longitude: ${longitude}`;
+          // Screen par Location Coordinates dikhana
+          document.getElementById("status").textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
 
+          // Firebase Database mein save karna
           set(ref(db, "locations/user1"), {
             latitude: latitude,
             longitude: longitude,
             timestamp: Date.now()
           });
-
         },
         (error) => {
-          document.getElementById("status").textContent =
-            "Location permission/error: " + error.message;
+          document.getElementById("status").textContent = "Location error: " + error.message;
         }
       );
 
