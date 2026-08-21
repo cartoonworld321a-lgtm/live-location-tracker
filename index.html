@@ -3,115 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Location Tracker</title>
+
+  <title>Live Bus Location Tracker</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
 </head>
 
 <body>
 
-  <h1>📍 Live Location Tracker</h1>
+  <div id="map"></div>
 
-  <button id="startBtn">Start Location</button>
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
 
-  <p id="status">Location not started</p>
+  <script>
+    // Map start
+    const map = L.map('map').setView([32.9857, 70.6027], 13);
 
-  <script type="module">
-
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-
-    import {
-      getDatabase,
-      ref,
-      set
-    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
-
-
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyD4eQ0qzXy5tBCJzQngG_agwDWrSghL13o",
-      authDomain: "live-location-tracker-6cef6.firebaseapp.com",
-      databaseURL: "https://live-location-tracker-6cef6-default-rtdb.firebaseio.com",
-      projectId: "live-location-tracker-6cef6",
-      storageBucket: "live-location-tracker-6cef6.firebasestorage.app",
-      messagingSenderId: "707093277933",
-      appId: "1:707093277933:web:0d9464477b21a4554bb0e4",
-      measurementId: "G-0122LFYS3Q"
-    };
-
-
-    // Firebase initialize
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-
-    // Start Location
-    document.getElementById("startBtn").addEventListener("click", () => {
-
-      if (!navigator.geolocation) {
-        document.getElementById("status").textContent =
-          "Geolocation supported nahi hai.";
-        return;
+    // OpenStreetMap
+    L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        attribution: '&copy; OpenStreetMap contributors'
       }
-
-      document.getElementById("status").textContent =
-        "Finding location...";
-
-
-      navigator.geolocation.watchPosition(
-
-        async (position) => {
-
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          const speed = position.coords.speed || 0;
-
-
-          // Screen par location
-          document.getElementById("status").textContent =
-            `Latitude: ${latitude}
-             Longitude: ${longitude}
-             Speed: ${speed}`;
-
-
-          // Firebase mein save
-          try {
-
-            await set(ref(db, "locations/user1"), {
-              latitude: latitude,
-              longitude: longitude,
-              speed: speed,
-              timestamp: Date.now()
-            });
-
-            console.log("Location Firebase mein save ho gayi.");
-
-          } catch (error) {
-
-            console.error("Firebase Error:", error);
-
-            document.getElementById("status").textContent =
-              "Firebase Error: " + error.message;
-          }
-
-        },
-
-        (error) => {
-
-          document.getElementById("status").textContent =
-            "Location error: " + error.message;
-
-        },
-
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 10000
-        }
-
-      );
-
-    });
-
+    ).addTo(map);
   </script>
 
 </body>
