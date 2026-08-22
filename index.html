@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Live Bus Location Tracker</title>
+  <title>Live Bus Tracker</title>
 
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  >
 
   <style>
     html, body {
@@ -17,7 +17,6 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      font-family: Arial, sans-serif;
     }
 
     #map {
@@ -27,15 +26,28 @@
 
     #startButton {
       position: absolute;
-      z-index: 1000;
       top: 15px;
       left: 15px;
+      z-index: 1000;
       padding: 12px 18px;
       border: none;
       border-radius: 8px;
       background: #1976d2;
       color: white;
       font-size: 16px;
+    }
+
+    #status {
+      position: absolute;
+      top: 65px;
+      left: 15px;
+      z-index: 1000;
+      background: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
   </style>
 </head>
@@ -44,24 +56,29 @@
 
   <button id="startButton">Start Live Location</button>
 
+  <div id="status">Waiting for GPS...</div>
+
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script type="module">
 
-    // Firebase
     import { initializeApp }
       from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 
     import {
       getDatabase,
       ref,
-      set
+      set,
+      onValue
     } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
 
-    // Firebase configuration
+    // =========================
+    // FIREBASE
+    // =========================
+
     const firebaseConfig = {
       apiKey: "AIzaSyD4eQ0qzXy5tBCJzQngG_agwDWrSghL13o",
       authDomain: "live-location-tracker-6cef6.firebaseapp.com",
@@ -73,14 +90,19 @@
       measurementId: "G-0122LFYS3Q"
     };
 
-
-    // Start Firebase
     const app = initializeApp(firebaseConfig);
+
     const db = getDatabase(app);
 
 
-    // Map
-    const map = L.map("map").setView([32.9857, 70.6027], 13);
+    // =========================
+    // MAP
+    // =========================
+
+    const map = L.map("map").setView(
+      [32.9857, 70.6027],
+      13
+    );
 
     L.tileLayer(
       "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -90,80 +112,164 @@
     ).addTo(map);
 
 
-    // Bus marker
+    // =========================
+    // BUS MARKER
+    // =========================
+
     let busMarker = null;
 
 
-    // Start live location
+    // =========================
+    // READ BUS LOCATION
+    // =========================
+
+    const locationRef = ref(db, "user1");
+
+    onValue(locationRef, (snapshot) => {
+
+      const data = snapshot.val();
+
+      if (!data) {
+        document.getElementById("status").textContent =
+          "🔴 No bus location";
+        return;
+      }
+
+      const latitude = Number(data.latitude);
+      const longitude = Number(data.longitude);
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        return;
+      }
+
+      const position = [
+        latitude,
+        longitude
+      ];
+
+
+      // Create marker
+      if (!busMarker) {
+
+        busMarker = L.marker(position)
+          .addTo(map)
+          .bindPopup("🚌 Bus 1");
+
+        map.setView(position, 16);
+
+      } else {
+
+        // Move marker
+        busMarker.setLatLng(position);
+
+      }
+
+      document.getElementById("status").textContent =
+        "🟢 Bus Live";
+
+    });
+
+
+    // =========================
+    // SEND PHONE GPS TO FIREBASE
+    // =========================
+
     document
       .getElementById("startButton")
       .addEventListener("click", () => {
 
         if (!navigator.geolocation) {
-          alert("Your phone does not support GPS.");
+
+          alert(
+            "GPS is not supported on this phone."
+          );
+
           return;
         }
+
+
+        document.getElementById("status").textContent =
+          "📡 Getting GPS...";
+
 
         navigator.geolocation.watchPosition(
 
           async (position) => {
 
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
+            const latitude =
+              position.coords.latitude;
 
-            console.log("Location:", latitude, longitude);
+            const longitude =
+              position.coords.longitude;
+
+            const speed =
+              position.coords.speed || 0;
 
 
-            // Show bus on map
+            // Save GPS to Firebase
+            await set(
+              ref(db, "user1"),
+              {
+                latitude: latitude,
+                longitude: longitude,
+                speed: speed,
+                timestamp: Date.now()
+              }
+            );
+
+
+            // Show own location immediately
+            const myPosition = [
+              latitude,
+              longitude
+            ];
+
+
             if (!busMarker) {
 
-              busMarker = L.marker([
-                latitude,
-                longitude
-              ])
-              .addTo(map)
-              .bindPopup("Bus 1");
+              busMarker = L.marker(myPosition)
+                .addTo(map)
+                .bindPopup("🚌 Bus 1");
 
             } else {
 
-              busMarker.setLatLng([
-                latitude,
-                longitude
-              ]);
+              busMarker.setLatLng(
+                myPosition
+              );
 
             }
 
 
-            // Move map to bus
-            map.setView([
-              latitude,
-              longitude
-            ], 16);
-
-
-            // Save location to Firebase
-            await set(
-              ref(db, "buses/bus1"),
-              {
-                latitude: latitude,
-                longitude: longitude,
-                updatedAt: Date.now()
-              }
+            map.setView(
+              myPosition,
+              16
             );
 
+
+            document.getElementById("status").textContent =
+              "🟢 GPS + Firebase Live";
+
           },
+
 
           (error) => {
 
+            document.getElementById("status").textContent =
+              "🔴 GPS Error";
+
             alert(
-              "Location error: " + error.message
+              "GPS Error: " + error.message
             );
 
           },
 
+
           {
             enableHighAccuracy: true,
-            maximumAge: 5000,
+            maximumAge: 3000,
             timeout: 10000
           }
 
