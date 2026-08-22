@@ -6,7 +6,6 @@
 
   <title>Live Bus Location Tracker</title>
 
-  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -18,35 +17,160 @@
       padding: 0;
       width: 100%;
       height: 100%;
+      font-family: Arial, sans-serif;
     }
 
     #map {
       width: 100%;
       height: 100vh;
     }
+
+    #startButton {
+      position: absolute;
+      z-index: 1000;
+      top: 15px;
+      left: 15px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #1976d2;
+      color: white;
+      font-size: 16px;
+    }
   </style>
 </head>
 
 <body>
 
+  <button id="startButton">Start Live Location</button>
+
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <script>
-    // Map start
-    const map = L.map('map').setView([32.9857, 70.6027], 13);
+  <script type="module">
 
-    // OpenStreetMap
+    // Firebase
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      set
+    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4eQ0qzXy5tBCJzQngG_agwDWrSghL13o",
+      authDomain: "live-location-tracker-6cef6.firebaseapp.com",
+      databaseURL: "https://live-location-tracker-6cef6-default-rtdb.firebaseio.com",
+      projectId: "live-location-tracker-6cef6",
+      storageBucket: "live-location-tracker-6cef6.firebasestorage.app",
+      messagingSenderId: "707093277933",
+      appId: "1:707093277933:web:0d9464477b21a4554bb0e4",
+      measurementId: "G-0122LFYS3Q"
+    };
+
+
+    // Start Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+
+    // Map
+    const map = L.map("map").setView([32.9857, 70.6027], 13);
+
     L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: "&copy; OpenStreetMap contributors"
       }
     ).addTo(map);
+
+
+    // Bus marker
+    let busMarker = null;
+
+
+    // Start live location
+    document
+      .getElementById("startButton")
+      .addEventListener("click", () => {
+
+        if (!navigator.geolocation) {
+          alert("Your phone does not support GPS.");
+          return;
+        }
+
+        navigator.geolocation.watchPosition(
+
+          async (position) => {
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            console.log("Location:", latitude, longitude);
+
+
+            // Show bus on map
+            if (!busMarker) {
+
+              busMarker = L.marker([
+                latitude,
+                longitude
+              ])
+              .addTo(map)
+              .bindPopup("Bus 1");
+
+            } else {
+
+              busMarker.setLatLng([
+                latitude,
+                longitude
+              ]);
+
+            }
+
+
+            // Move map to bus
+            map.setView([
+              latitude,
+              longitude
+            ], 16);
+
+
+            // Save location to Firebase
+            await set(
+              ref(db, "buses/bus1"),
+              {
+                latitude: latitude,
+                longitude: longitude,
+                updatedAt: Date.now()
+              }
+            );
+
+          },
+
+          (error) => {
+
+            alert(
+              "Location error: " + error.message
+            );
+
+          },
+
+          {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 10000
+          }
+
+        );
+
+      });
+
   </script>
 
 </body>
