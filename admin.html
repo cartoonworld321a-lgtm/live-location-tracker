@@ -21,7 +21,7 @@
     }
 
     .container {
-      max-width: 500px;
+      max-width: 600px;
       margin: 30px auto;
       padding: 20px;
     }
@@ -29,6 +29,7 @@
     .card {
       background: white;
       padding: 20px;
+      margin-bottom: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
@@ -54,230 +55,311 @@
       background: #1d4ed8;
     }
 
-    #message {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      display: none;
+    .bus {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 12px;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    .bus h3 {
+      margin-top: 0;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    .offline {
+      color: #dc2626;
     }
 
     .success {
       background: #dcfce7;
       color: #166534;
+      padding: 10px;
+      margin-top: 15px;
+      border-radius: 8px;
+      display: none;
     }
 
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    h2 {
-      margin-top: 0;
+    .empty {
+      color: #666;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <h1>🚌 Bus Tracking Admin</h1>
-  </header>
+<header>
+  <h1>🚌 Bus Tracking Admin</h1>
+</header>
 
-  <div class="container">
+<div class="container">
 
-    <div class="card">
+  <!-- ADD BUS -->
 
-      <h2>➕ Add New Bus</h2>
+  <div class="card">
 
-      <input
-        type="text"
-        id="busId"
-        placeholder="Bus ID e.g. BUS001"
-      >
+    <h2>➕ Add New Bus</h2>
 
-      <input
-        type="text"
-        id="busName"
-        placeholder="Bus Name"
-      >
+    <input
+      type="text"
+      id="busId"
+      placeholder="Bus ID e.g. BUS001"
+    >
 
-      <input
-        type="text"
-        id="driverName"
-        placeholder="Driver Name"
-      >
+    <input
+      type="text"
+      id="busName"
+      placeholder="Bus Name"
+    >
 
-      <input
-        type="text"
-        id="route"
-        placeholder="Route e.g. Bannu - Peshawar"
-      >
+    <input
+      type="text"
+      id="driverName"
+      placeholder="Driver Name"
+    >
 
-      <button id="addButton">
-        ➕ Add Bus
-      </button>
+    <input
+      type="text"
+      id="route"
+      placeholder="Route e.g. Bannu - Peshawar"
+    >
 
-      <div id="message"></div>
+    <button id="addButton">
+      ➕ Add Bus
+    </button>
 
-    </div>
+    <div id="message" class="success"></div>
 
   </div>
 
 
-  <script type="module">
+  <!-- BUS LIST -->
 
-    // =========================
-    // FIREBASE IMPORTS
-    // =========================
+  <div class="card">
 
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+    <h2>🚌 All Buses</h2>
 
-    import {
-      getDatabase,
-      ref,
-      set
-    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+    <div id="busList">
+      <p class="empty">Loading buses...</p>
+    </div>
 
+  </div>
 
-    // =========================
-    // FIREBASE CONFIG
-    // =========================
-
-    const firebaseConfig = {
-
-      apiKey: "AIzaSyD4eQ0qzXy5tBCJzQngG_agwDWrSghL13o",
-
-      authDomain:
-        "live-location-tracker-6cef6.firebaseapp.com",
-
-      databaseURL:
-        "https://live-location-tracker-6cef6-default-rtdb.firebaseio.com",
-
-      projectId:
-        "live-location-tracker-6cef6",
-
-      storageBucket:
-        "live-location-tracker-6cef6.firebasestorage.app",
-
-      messagingSenderId:
-        "707093277933",
-
-      appId:
-        "1:707093277933:web:0d9464477b21a4554bb0e4",
-
-      measurementId:
-        "G-0122LFYS3Q"
-    };
+</div>
 
 
-    // =========================
-    // START FIREBASE
-    // =========================
+<script type="module">
 
-    const app = initializeApp(firebaseConfig);
+  // =========================
+  // FIREBASE IMPORTS
+  // =========================
 
-    const db = getDatabase(app);
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 
-
-    // =========================
-    // ADD BUS
-    // =========================
-
-    document
-      .getElementById("addButton")
-      .addEventListener("click", async () => {
-
-        const busId =
-          document.getElementById("busId").value.trim();
-
-        const busName =
-          document.getElementById("busName").value.trim();
-
-        const driverName =
-          document.getElementById("driverName").value.trim();
-
-        const route =
-          document.getElementById("route").value.trim();
-
-        const message =
-          document.getElementById("message");
+  import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
 
-        // Check fields
+  // =========================
+  // FIREBASE CONFIG
+  // =========================
 
-        if (
-          !busId ||
-          !busName ||
-          !driverName ||
-          !route
-        ) {
+  const firebaseConfig = {
 
-          message.style.display = "block";
+    apiKey: "AIzaSyD4eQ0qzXy5tBCJzQngG_agwDWrSghL13o",
 
-          message.className = "error";
+    authDomain:
+      "live-location-tracker-6cef6.firebaseapp.com",
 
-          message.textContent =
-            "❌ Please fill all fields.";
+    databaseURL:
+      "https://live-location-tracker-6cef6-default-rtdb.firebaseio.com",
 
-          return;
-        }
+    projectId:
+      "live-location-tracker-6cef6",
 
+    storageBucket:
+      "live-location-tracker-6cef6.firebasestorage.app",
 
-        try {
+    messagingSenderId:
+      "707093277933",
 
-          // Save bus to Firebase
+    appId:
+      "1:707093277933:web:0d9464477b21a4554bb0e4",
 
-          await set(
-            ref(db, "buses/" + busId),
-            {
-              busId: busId,
-              busName: busName,
-              driverName: driverName,
-              route: route,
-              status: "offline",
-              createdAt: Date.now()
-            }
-          );
+    measurementId:
+      "G-0122LFYS3Q"
+  };
 
 
-          // Success message
+  // =========================
+  // START FIREBASE
+  // =========================
 
-          message.style.display = "block";
+  const app = initializeApp(firebaseConfig);
 
-          message.className = "success";
-
-          message.textContent =
-            "✅ Bus added successfully!";
-
-
-          // Clear inputs
-
-          document.getElementById("busId").value = "";
-
-          document.getElementById("busName").value = "";
-
-          document.getElementById("driverName").value = "";
-
-          document.getElementById("route").value = "";
+  const db = getDatabase(app);
 
 
-        } catch (error) {
+  // =========================
+  // ADD BUS
+  // =========================
 
-          console.error(error);
+  document
+    .getElementById("addButton")
+    .addEventListener("click", async () => {
 
-          message.style.display = "block";
+      const busId =
+        document.getElementById("busId").value.trim();
 
-          message.className = "error";
+      const busName =
+        document.getElementById("busName").value.trim();
 
-          message.textContent =
-            "❌ Firebase Error: " + error.message;
+      const driverName =
+        document.getElementById("driverName").value.trim();
 
-        }
+      const route =
+        document.getElementById("route").value.trim();
 
-      });
+      const message =
+        document.getElementById("message");
 
-  </script>
+
+      if (
+        !busId ||
+        !busName ||
+        !driverName ||
+        !route
+      ) {
+
+        message.style.display = "block";
+
+        message.textContent =
+          "❌ Please fill all fields.";
+
+        return;
+      }
+
+
+      try {
+
+        await set(
+          ref(db, "buses/" + busId),
+          {
+            busId: busId,
+            busName: busName,
+            driverName: driverName,
+            route: route,
+            status: "offline",
+            createdAt: Date.now()
+          }
+        );
+
+
+        message.style.display = "block";
+
+        message.textContent =
+          "✅ Bus added successfully!";
+
+
+        document.getElementById("busId").value = "";
+
+        document.getElementById("busName").value = "";
+
+        document.getElementById("driverName").value = "";
+
+        document.getElementById("route").value = "";
+
+      }
+
+      catch (error) {
+
+        message.style.display = "block";
+
+        message.textContent =
+          "❌ Firebase Error: " + error.message;
+
+      }
+
+    });
+
+
+  // =========================
+  // LOAD ALL BUSES
+  // =========================
+
+  const busesRef = ref(db, "buses");
+
+  onValue(busesRef, (snapshot) => {
+
+    const data = snapshot.val();
+
+    const busList =
+      document.getElementById("busList");
+
+
+    busList.innerHTML = "";
+
+
+    if (!data) {
+
+      busList.innerHTML =
+        '<p class="empty">No buses added yet.</p>';
+
+      return;
+    }
+
+
+    Object.values(data).forEach((bus) => {
+
+      const busDiv =
+        document.createElement("div");
+
+      busDiv.className = "bus";
+
+
+      busDiv.innerHTML = `
+
+        <h3>🚌 ${bus.busName || "Unnamed Bus"}</h3>
+
+        <p>
+          <strong>Bus ID:</strong>
+          ${bus.busId || "-"}
+        </p>
+
+        <p>
+          <strong>Driver:</strong>
+          ${bus.driverName || "-"}
+        </p>
+
+        <p>
+          <strong>Route:</strong>
+          ${bus.route || "-"}
+        </p>
+
+        <p class="status offline">
+          🔴 ${bus.status || "offline"}
+        </p>
+
+      `;
+
+
+      busList.appendChild(busDiv);
+
+    });
+
+  });
+
+</script>
 
 </body>
 </html>
