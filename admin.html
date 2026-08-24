@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Bus Tracking - Admin Panel</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 10px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🚌 Bus Tracking Admin</h1>
+  </header>
+
+  <div class="container">
+
+    <div class="card">
+
+      <h2>Add New Bus</h2>
+
+      <input
+        type="text"
+        id="busId"
+        placeholder="Bus ID e.g. BUS001"
+      >
+
+      <input
+        type="text"
+        id="busName"
+        placeholder="Bus Name"
+      >
+
+      <input
+        type="text"
+        id="driverName"
+        placeholder="Driver Name"
+      >
+
+      <input
+        type="text"
+        id="route"
+        placeholder="Route e.g. Bannu - Peshawar"
+      >
+
+      <button onclick="addBus()">
+        ➕ Add Bus
+      </button>
+
+    </div>
+
+  </div>
+
+  <script>
+    function addBus() {
+
+      const busId = document.getElementById("busId").value;
+      const busName = document.getElementById("busName").value;
+      const driverName = document.getElementById("driverName").value;
+      const route = document.getElementById("route").value;
+
+      if (!busId || !busName || !driverName || !route) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      alert(
+        "Bus added successfully!\\n\\n" +
+        "Bus ID: " + busId + "\\n" +
+        "Bus: " + busName + "\\n" +
+        "Driver: " + driverName + "\\n" +
+        "Route: " + route
+      );
+    }
+  </script>
+
+</body>
+</html>
